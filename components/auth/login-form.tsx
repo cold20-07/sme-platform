@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { useDevAuth } from '@/lib/dev-auth';
+import { getEnvironmentConfig } from '@/lib/env';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +18,9 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useAuth();
+  const config = getEnvironmentConfig();
+  const authHook = config.devMode ? useDevAuth : useAuth;
+  const { signIn } = authHook();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {

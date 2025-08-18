@@ -1,4 +1,5 @@
 'use client';
+import { memo, useMemo } from 'react';
 import { StatsCard } from '@/components/ui/stats-card';
 import {
   DollarSign,
@@ -11,7 +12,15 @@ import {
   Wallet,
 } from 'lucide-react';
 
-const metrics = [
+interface MetricData {
+  title: string;
+  value: string;
+  change: { value: number; type: 'positive' | 'negative' | 'neutral' };
+  icon: React.ReactNode;
+}
+
+// Memoized metric data to prevent recreation on every render
+const getMetricsData = (): MetricData[] => [
   {
     title: 'Total Revenue',
     value: '₹2,45,000',
@@ -62,12 +71,15 @@ const metrics = [
   },
 ];
 
-export function MetricsGrid() {
+export const MetricsGrid = memo(function MetricsGrid() {
+  // Memoize metrics data to prevent recreation on every render
+  const metrics = useMemo(() => getMetricsData(), []);
+
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric, index) => (
         <StatsCard
-          key={index}
+          key={`${metric.title}-${index}`} // More stable key
           title={metric.title}
           value={metric.value}
           change={metric.change}
@@ -76,4 +88,4 @@ export function MetricsGrid() {
       ))}
     </div>
   );
-}
+});

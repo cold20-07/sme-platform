@@ -21,7 +21,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-} from 'recharts';
+} from '@/components/ui/chart-wrapper';
 
 // Mock data
 const capTableData = {
@@ -182,7 +182,7 @@ export default function CapTablePage() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value}%`, '']} />
+                <Tooltip formatter={(value: any) => [`${value}%`, '']} />
               </RechartsPieChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-3">
@@ -210,7 +210,7 @@ export default function CapTablePage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="round" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`₹${(value as number / 100000).toFixed(1)}L`, 'Amount']} />
+                <Tooltip formatter={(value: any) => [`₹${(value as number / 100000).toFixed(1)}L`, 'Amount']} />
                 <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

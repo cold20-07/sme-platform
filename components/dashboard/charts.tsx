@@ -1,4 +1,5 @@
 'use client';
+import { memo, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AreaChart,
@@ -13,9 +14,10 @@ import {
   Cell,
   BarChart,
   Bar,
-} from 'recharts';
+} from '../ui/chart-wrapper';
 
-const revenueData = [
+// Memoized data to prevent recreation on every render
+const getRevenueData = () => [
   { month: 'Jan', revenue: 45000, expenses: 35000 },
   { month: 'Feb', revenue: 52000, expenses: 38000 },
   { month: 'Mar', revenue: 48000, expenses: 36000 },
@@ -24,13 +26,13 @@ const revenueData = [
   { month: 'Jun', revenue: 67000, expenses: 45000 },
 ];
 
-const ownershipData = [
+const getOwnershipData = () => [
   { name: 'Founders', value: 56.4, color: '#3b82f6' },
   { name: 'Investors', value: 36.1, color: '#10b981' },
   { name: 'ESOP Pool', value: 8.0, color: '#f59e0b' },
 ];
 
-const complianceData = [
+const getComplianceData = () => [
   { month: 'Jan', completed: 12, pending: 3 },
   { month: 'Feb', completed: 15, pending: 2 },
   { month: 'Mar', completed: 18, pending: 1 },
@@ -39,7 +41,12 @@ const complianceData = [
   { month: 'Jun', completed: 16, pending: 3 },
 ];
 
-export function RevenueChart() {
+export const RevenueChart = memo(function RevenueChart() {
+  const revenueData = useMemo(() => getRevenueData(), []);
+  
+  // Memoized tooltip formatter to prevent recreation
+  const tooltipFormatter = useCallback((value: any) => [`₹${value.toLocaleString()}`, ''], []);
+
   return (
     <Card className="col-span-2">
       <CardHeader>
@@ -51,7 +58,7 @@ export function RevenueChart() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
-            <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, '']} />
+            <Tooltip formatter={tooltipFormatter} />
             <Area
               type="monotone"
               dataKey="revenue"
@@ -73,9 +80,30 @@ export function RevenueChart() {
       </CardContent>
     </Card>
   );
-}
+});
 
-export function OwnershipChart() {
+export const OwnershipChart = memo(function OwnershipChart() {
+  const ownershipData = useMemo(() => getOwnershipData(), []);
+  
+  // Memoized tooltip formatter
+  const tooltipFormatter = useCallback((value: any) => [`${value}%`, ''], []);
+  
+  // Memoized legend items to prevent recreation
+  const legendItems = useMemo(() => 
+    ownershipData.map((item, index) => (
+      <div key={`${item.name}-${index}`} className="flex items-center justify-between text-sm">
+        <div className="flex items-center space-x-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: item.color }}
+          />
+          <span>{item.name}</span>
+        </div>
+        <span className="font-medium">{item.value}%</span>
+      </div>
+    )), [ownershipData]
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -94,32 +122,23 @@ export function OwnershipChart() {
               dataKey="value"
             >
               {ownershipData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell key={`cell-${entry.name}-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => [`${value}%`, '']} />
+            <Tooltip formatter={tooltipFormatter} />
           </PieChart>
         </ResponsiveContainer>
         <div className="mt-4 space-y-2">
-          {ownershipData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span>{item.name}</span>
-              </div>
-              <span className="font-medium">{item.value}%</span>
-            </div>
-          ))}
+          {legendItems}
         </div>
       </CardContent>
     </Card>
   );
-}
+});
 
-export function ComplianceChart() {
+export const ComplianceChart = memo(function ComplianceChart() {
+  const complianceData = useMemo(() => getComplianceData(), []);
+
   return (
     <Card>
       <CardHeader>
@@ -139,4 +158,4 @@ export function ComplianceChart() {
       </CardContent>
     </Card>
   );
-}
+});

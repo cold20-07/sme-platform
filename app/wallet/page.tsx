@@ -26,7 +26,7 @@ import {
   PieChart as RechartsPieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from '@/components/ui/chart-wrapper';
 
 // Mock data
 const walletBalance = 85000;
@@ -151,7 +151,7 @@ export default function WalletPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, '']} />
+                <Tooltip formatter={(value: any) => [`₹${value.toLocaleString()}`, '']} />
                 <Line 
                   type="monotone" 
                   dataKey="balance" 
@@ -192,7 +192,7 @@ export default function WalletPage() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, '']} />
+                <Tooltip formatter={(value: any) => [`₹${value.toLocaleString()}`, '']} />
               </RechartsPieChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-2">

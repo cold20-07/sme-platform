@@ -2,19 +2,102 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { useEnhancedAuth } from '@/hooks/use-enhanced-auth';
+import { AuthenticationError } from './auth-error-handler';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, companyData: any) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<void>;
+  error: AuthenticationError | null;
+  isAuthenticated: boolean;
+  isSessionValid: boolean;
+  needsRefresh: boolean;
+  signUp: (email: string, password: string, companyData: any) => Promise<{ success: boolean; error?: AuthenticationError }>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: AuthenticationError }>;
+  signOut: () => Promise<{ success: boolean; error?: AuthenticationError }>;
+  refreshSession: () => Promise<{ success: boolean; error?: AuthenticationError }>;
+  validateSession: () => Promise<boolean>;
+  clearError: () => void;
+  retryLastAction: () => Promise<{ success: boolean; error?: AuthenticationError }>;
+  getSessionTimeRemaining: () => number | null;
+  canRetry: () => boolean;
+  requiresReauth: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const enhancedAuth = useEnhancedAuth();
+
+  // Legacy signUp wrapper for backward compatibility
+  const legacySignUp = async (email: string, password: string, companyData: any) => {
+    const result = await enhancedAuth.signUp(email, password, companyData);
+    if (!result.success && result.error) {
+      throw result.error;
+    }
+    return { user: enhancedAuth.user, session: enhancedAuth.session };
+  };
+
+  // Legacy signIn wrapper for backward compatibility
+  const legacySignIn = async (email: string, password: string) => {
+    const result = await enhancedAuth.signIn(email, password);
+    if (!result.success && result.error) {
+      throw result.error;
+    }
+    return { user: enhancedAuth.user, session: enhancedAuth.session };
+  };
+
+  // Legacy signOut wrapper for backward compatibility
+  const legacySignOut = async () => {
+    const result = await enhancedAuth.signOut();
+    if (!result.success && result.error) {
+      throw result.error;
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        // Enhanced auth state
+        user: enhancedAuth.user,
+        session: enhancedAuth.session,
+        loading: enhancedAuth.loading,
+        error: enhancedAuth.error,
+        isAuthenticated: enhancedAuth.isAuthenticated,
+        isSessionValid: enhancedAuth.isSessionValid,
+        needsRefresh: enhancedAuth.needsRefresh,
+        
+        // Enhanced auth actions
+        signUp: enhancedAuth.signUp,
+        signIn: enhancedAuth.signIn,
+        signOut: enhancedAuth.signOut,
+        refreshSession: enhancedAuth.refreshSession,
+        validateSession: enhancedAuth.validateSession,
+        clearError: enhancedAuth.clearError,
+        retryLastAction: enhancedAuth.retryLastAction,
+        
+        // Utility functions
+        getSessionTimeRemaining: enhancedAuth.getSessionTimeRemaining,
+        canRetry: enhancedAuth.canRetry,
+        requiresReauth: enhancedAuth.requiresReauth,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+// Legacy auth provider for backward compatibility
+export function LegacyAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,20 +187,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         loading,
-        signUp,
-        signIn,
-        signOut,
+        error: null,
+        isAuthenticated: !!user,
+        isSessionValid: !!session,
+        needsRefresh: false,
+        signUp: async (email, password, companyData) => {
+          try {
+            await signUp(email, password, companyData);
+            return { success: true };
+          } catch (error: any) {
+            return { success: false, error };
+          }
+        },
+        signIn: async (email, password) => {
+          try {
+            await signIn(email, password);
+            return { success: true };
+          } catch (error: any) {
+            return { success: false, error };
+          }
+        },
+        signOut: async () => {
+          try {
+            await signOut();
+            return { success: true };
+          } catch (error: any) {
+            return { success: false, error };
+          }
+        },
+        refreshSession: async () => ({ success: true }),
+        validateSession: async () => !!session,
+        clearError: () => {},
+        retryLastAction: async () => ({ success: true }),
+        getSessionTimeRemaining: () => null,
+        canRetry: () => false,
+        requiresReauth: () => false,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }
