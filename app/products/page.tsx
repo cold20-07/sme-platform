@@ -1,5 +1,6 @@
 'use client';
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,53 +24,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Mock data
-const products = [
-  {
-    id: 1,
-    name: 'Premium Widget A',
-    sku: 'PWA-001',
-    category: 'Electronics',
-    price: 2500,
-    stock: 45,
-    reorderLevel: 20,
-    status: 'active',
-    description: 'High-quality premium widget for industrial use',
-  },
-  {
-    id: 2,
-    name: 'Standard Component B',
-    sku: 'SCB-002',
-    category: 'Components',
-    price: 850,
-    stock: 12,
-    reorderLevel: 15,
-    status: 'active',
-    description: 'Standard component for manufacturing applications',
-  },
-  {
-    id: 3,
-    name: 'Professional Tool C',
-    sku: 'PTC-003',
-    category: 'Tools',
-    price: 4200,
-    stock: 28,
-    reorderLevel: 10,
-    status: 'active',
-    description: 'Professional-grade tool for specialized tasks',
-  },
-  {
-    id: 4,
-    name: 'Basic Module D',
-    sku: 'BMD-004',
-    category: 'Modules',
-    price: 1200,
-    stock: 5,
-    reorderLevel: 25,
-    status: 'inactive',
-    description: 'Basic module for entry-level applications',
-  },
-];
+// Product CRUD logic
+const initialFormState = {
+  id: null,
+  name: '',
+  sku: '',
+  category: '',
+  price: 0,
+  stock: 0,
+  reorderLevel: 0,
+  status: 'active',
+  description: '',
+};
 
 const getStockStatus = (stock: number, reorderLevel: number) => {
   if (stock <= reorderLevel) {
@@ -86,9 +52,11 @@ const getStatusColor = (status: string) => {
 
 // Memoized product row component
 const ProductRow = memo(function ProductRow({ 
-  product 
+  product, onEdit, onDelete 
 }: { 
-  product: typeof products[0] 
+  product: any,
+  onEdit: (product: any) => void,
+  onDelete: (id: any) => void
 }) {
   const stockStatus = useMemo(() => getStockStatus(product.stock, product.reorderLevel), [product.stock, product.reorderLevel]);
   const StockIcon = stockStatus.icon;
@@ -145,11 +113,11 @@ const ProductRow = memo(function ProductRow({
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(product)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit Product
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={() => onDelete(product.id)}>
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
@@ -161,29 +129,117 @@ const ProductRow = memo(function ProductRow({
 });
 
 export default function ProductsPage() {
+  type Product = {
+    id: number;
+    name: string;
+    sku: string;
+    category: string;
+    price: number;
+    stock: number;
+    reorderLevel: number;
+    status: string;
+  };
+  const [products, setProducts] = useState<Product[]>([
+    {
+      id: 1,
+      name: 'Product A',
+      sku: 'SKU-001',
+      category: 'Electronics',
+      price: 1500,
+      stock: 25,
+      reorderLevel: 10,
+      status: 'active',
+    },
+    {
+      id: 2,
+      name: 'Product B',
+      sku: 'SKU-002',
+      category: 'Apparel',
+      price: 800,
+      stock: 40,
+      reorderLevel: 15,
+      status: 'active',
+    },
+    {
+      id: 3,
+      name: 'Product C',
+      sku: 'SKU-003',
+      category: 'Stationery',
+      price: 120,
+      stock: 100,
+      reorderLevel: 20,
+      status: 'inactive',
+    },
+  ]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState(initialFormState);
+  const [showForm, setShowForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Memoized search handler to prevent recreation
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  useEffect(() => {
+    fetchProducts();
   }, []);
 
-  // Memoized filtered products
-  const filteredProducts = useMemo(() => 
-    products.filter(product => 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [searchTerm]
+  async function fetchProducts() {
+    setLoading(true);
+    const { data, error } = await supabase.from('products').select('*');
+    if (!error) setProducts(data || []);
+    setLoading(false);
+  }
+
+  async function handleSaveProduct(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (editMode) {
+      await supabase.from('products').update(form).eq('id', form.id);
+    } else {
+      await supabase.from('products').insert([{ ...form }]);
+    }
+    setShowForm(false);
+    setForm(initialFormState);
+    setEditMode(false);
+    fetchProducts();
+  }
+
+  function handleEditProduct(product: Product) {
+    setForm({
+      id: product.id as any,
+      name: product.name,
+      sku: product.sku,
+      category: product.category,
+      price: product.price,
+      stock: product.stock,
+      reorderLevel: product.reorderLevel,
+      status: product.status,
+      description: '',
+    });
+    setEditMode(true);
+    setShowForm(true);
+  }
+
+  async function handleDeleteProduct(id: number) {
+    await supabase.from('products').delete().eq('id', id);
+    fetchProducts();
+  }
+
+  function handleAddProduct() {
+    setForm(initialFormState);
+    setEditMode(false);
+    setShowForm(true);
+  }
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Memoized statistics
-  const stats = useMemo(() => ({
+  const stats = {
     totalProducts: products.length,
     lowStockProducts: products.filter(p => p.stock <= p.reorderLevel).length,
     totalValue: products.reduce((sum, p) => sum + (p.price * p.stock), 0),
     activeProducts: products.filter(p => p.status === 'active').length
-  }), []);
+  };
 
   return (
     <div className="space-y-6">
@@ -195,11 +251,51 @@ export default function ProductsPage() {
             Manage your product catalog and track inventory levels
           </p>
         </div>
-        <Button>
+        <Button onClick={handleAddProduct}>
           <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
       </div>
+
+      {/* Product Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <form className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md" onSubmit={handleSaveProduct}>
+            <h2 className="text-lg font-bold mb-4">{editMode ? 'Edit Product' : 'Add Product'}</h2>
+            <div className="mb-3">
+              <Input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+            </div>
+            <div className="mb-3">
+              <Input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} required />
+            </div>
+            <div className="mb-3">
+              <Input placeholder="Category" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} required />
+            </div>
+            <div className="mb-3">
+              <Input type="number" placeholder="Price" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} required />
+            </div>
+            <div className="mb-3">
+              <Input type="number" placeholder="Stock" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} required />
+            </div>
+            <div className="mb-3">
+              <Input type="number" placeholder="Reorder Level" value={form.reorderLevel} onChange={e => setForm({ ...form, reorderLevel: Number(e.target.value) })} required />
+            </div>
+            <div className="mb-3">
+              <select className="w-full border rounded p-2" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <div className="mb-3">
+              <Input placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+            </div>
+            <div className="flex space-x-2">
+              <Button type="submit">{editMode ? 'Update' : 'Create'}</Button>
+              <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditMode(false); }}>Cancel</Button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-4">
@@ -251,7 +347,7 @@ export default function ProductsPage() {
                   placeholder="Search products..."
                   className="pl-8 w-64"
                   value={searchTerm}
-                  onChange={handleSearchChange}
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
               <Button variant="outline" size="sm">
@@ -277,7 +373,7 @@ export default function ProductsPage() {
               </thead>
               <tbody>
                 {filteredProducts.map((product) => (
-                  <ProductRow key={product.id} product={product} />
+                  <ProductRow key={product.id} product={product} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
                 ))}
               </tbody>
             </table>

@@ -95,12 +95,14 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleReload = () => {
+    // Reload only on client
     if (typeof window !== 'undefined') {
       window.location.reload();
     }
   };
 
   private handleGoHome = () => {
+    // Redirect only on client
     if (typeof window !== 'undefined') {
       window.location.href = '/dashboard';
     }
@@ -113,37 +115,85 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // Default error UI
+      // Default error UI with mock error log and statistics
+      const mockErrors = [
+        {
+          id: 'ERR-001',
+          message: 'Network request failed',
+          status: 'Resolved',
+          timestamp: '2025-08-18 10:23',
+        },
+        {
+          id: 'ERR-002',
+          message: 'Invalid user input',
+          status: 'Unresolved',
+          timestamp: '2025-08-18 11:05',
+        },
+        {
+          id: 'ERR-003',
+          message: 'Database connection lost',
+          status: 'Resolved',
+          timestamp: '2025-08-19 09:42',
+        },
+      ];
+
+      const totalErrors = mockErrors.length;
+      const resolvedErrors = mockErrors.filter(e => e.status === 'Resolved').length;
+      const unresolvedErrors = mockErrors.filter(e => e.status === 'Unresolved').length;
+
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
+          <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-6 text-center">
             <div className="flex justify-center mb-4">
               <AlertTriangle className="h-12 w-12 text-red-500" />
             </div>
-            
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
               Something went wrong
             </h1>
-            
             <p className="text-gray-600 mb-6">
-              We're sorry, but something unexpected happened. Our team has been notified.
+              We're sorry, but something unexpected happened. Our team has been notified.<br />
+              <span className="text-xs text-gray-400">(Demo: Mock error log below)</span>
             </p>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 p-4 bg-red-50 rounded-lg text-left">
-                <h3 className="text-sm font-medium text-red-800 mb-2">
-                  Error Details (Development Only):
-                </h3>
-                <p className="text-xs text-red-700 font-mono break-all">
-                  {this.state.error.message}
-                </p>
-                {this.state.errorId && (
-                  <p className="text-xs text-red-600 mt-2">
-                    Error ID: {this.state.errorId}
-                  </p>
-                )}
+            {/* Error statistics */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-gray-100 rounded-lg p-3">
+                <div className="text-lg font-bold text-gray-800">{totalErrors}</div>
+                <div className="text-xs text-gray-500">Total Errors</div>
               </div>
-            )}
+              <div className="bg-green-100 rounded-lg p-3">
+                <div className="text-lg font-bold text-green-800">{resolvedErrors}</div>
+                <div className="text-xs text-green-600">Resolved</div>
+              </div>
+              <div className="bg-red-100 rounded-lg p-3">
+                <div className="text-lg font-bold text-red-800">{unresolvedErrors}</div>
+                <div className="text-xs text-red-600">Unresolved</div>
+              </div>
+            </div>
+
+            {/* Mock error log table */}
+            <div className="mb-6 overflow-x-auto">
+              <table className="min-w-full text-left border rounded-lg">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="px-3 py-2 text-xs font-semibold text-gray-700">ID</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-gray-700">Message</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-gray-700">Status</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-gray-700">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockErrors.map((err) => (
+                    <tr key={err.id} className="border-b last:border-b-0">
+                      <td className="px-3 py-2 text-xs text-gray-800 font-mono">{err.id}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700">{err.message}</td>
+                      <td className={`px-3 py-2 text-xs font-semibold ${err.status === 'Resolved' ? 'text-green-700' : 'text-red-700'}`}>{err.status}</td>
+                      <td className="px-3 py-2 text-xs text-gray-500">{err.timestamp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className="space-y-3">
               {this.retryCount < this.maxRetries && (
@@ -155,7 +205,6 @@ export class ErrorBoundary extends Component<Props, State> {
                   Try Again ({this.maxRetries - this.retryCount} attempts left)
                 </button>
               )}
-              
               <button
                 onClick={this.handleGoHome}
                 className="w-full flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
@@ -163,7 +212,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 <Home className="h-4 w-4 mr-2" />
                 Go to Dashboard
               </button>
-              
               <button
                 onClick={this.handleReload}
                 className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"

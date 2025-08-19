@@ -8,7 +8,7 @@
       "env": {
         "SUPABASE_URL": "https://aosepddgbdkyqcsqciiz.supabase.co",
         "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvc2VwZGRnYmRreXFjc3FjaWl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MTA1MzIsImV4cCI6MjA3MDQ4NjUzMn0.mb_QjU9K4QCAn3xdli0gazTQsu7fIoSHJ-ThPfNh7SM",
-        "SUPABASE_ACCESS_TOKEN": "YOUR_SUPABASE_ACCESS_TOKEN_HERE"
+        "SUPABASE_ACCESS_TOKEN": "sbp_c05137412d3754539e9ef6508a2bf132ec00c13b"
       },
       "disabled": false,
       "autoApprove": [

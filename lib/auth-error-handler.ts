@@ -367,7 +367,9 @@ class TokenManagerImpl implements TokenManager {
     
     try {
       // Decode JWT token to check expiry
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const tokenPart = token.split('.')[1];
+      if (!tokenPart) return true;
+      const payload = JSON.parse(atob(tokenPart));
       const now = Math.floor(Date.now() / 1000);
       
       return payload.exp <= now;
@@ -382,7 +384,9 @@ class TokenManagerImpl implements TokenManager {
     }
     
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const tokenPart = token.split('.')[1];
+      if (!tokenPart) return null;
+      const payload = JSON.parse(atob(tokenPart));
       return payload.exp * 1000; // Convert to milliseconds
     } catch (error) {
       return null;
@@ -443,12 +447,12 @@ export const reauthRecovery: AuthRecoveryStrategy = {
       // Clear session first
       const sessionManager = new SessionManagerImpl();
       await sessionManager.clearSession();
-      
       // Redirect to login
       window.location.href = '/auth/login';
+      return { success: true };
     }
-    
-    return { success: true };
+    // SSR fallback: do nothing
+    return { success: false };
   },
 };
 
@@ -538,4 +542,4 @@ export function isSessionExpired(error: any): boolean {
 }
 
 // Export types
-export type { AuthRecoveryStrategy };
+// Removed duplicate export of AuthRecoveryStrategy

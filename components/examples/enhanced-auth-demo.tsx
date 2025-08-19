@@ -34,12 +34,16 @@ export function EnhancedAuthDemo() {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+    }
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      }
     };
   }, []);
 
@@ -173,7 +177,9 @@ export function EnhancedAuthDemo() {
         <AuthErrorDisplay
           error={auth.error}
           onRetry={auth.canRetry() ? handleRetry : undefined}
-          onReauth={auth.requiresReauth() ? () => window.location.href = '/auth/login' : undefined}
+          onReauth={auth.requiresReauth() ? () => {
+            if (typeof window !== 'undefined') window.location.href = '/auth/login';
+          } : undefined}
           onDismiss={auth.clearError}
         />
       )}

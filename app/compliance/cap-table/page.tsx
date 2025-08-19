@@ -23,6 +23,8 @@ import {
   Tooltip,
 } from '@/components/ui/chart-wrapper';
 
+
+
 // Mock data
 const capTableData = {
   totalShares: 17131,
@@ -128,28 +130,28 @@ export default function CapTablePage() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-4">
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{capTableData.totalShares.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{capTableData.totalShares?.toLocaleString?.() ?? 0}</div>
             <p className="text-sm text-muted-foreground">Total Shares</p>
             <div className="text-xs text-gray-500 mt-1">Issued and Outstanding</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-blue-600">{capTableData.founderOwnership}%</div>
+            <div className="text-2xl font-bold text-blue-600">{capTableData.founderOwnership ?? 0}%</div>
             <p className="text-sm text-muted-foreground">Founder Ownership</p>
             <div className="text-xs text-gray-500 mt-1">Of total issued equity</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-green-600">{capTableData.investorOwnership}%</div>
+            <div className="text-2xl font-bold text-green-600">{capTableData.investorOwnership ?? 0}%</div>
             <p className="text-sm text-muted-foreground">Investor Ownership</p>
             <div className="text-xs text-gray-500 mt-1">Post-series seed</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-yellow-600">{capTableData.esopPool}%</div>
+            <div className="text-2xl font-bold text-yellow-600">{capTableData.esopPool ?? 0}%</div>
             <p className="text-sm text-muted-foreground">ESOP Pool</p>
             <div className="text-xs text-gray-500 mt-1">Reserved for employees</div>
           </CardContent>
@@ -278,17 +280,17 @@ export default function CapTablePage() {
                       </Badge>
                     </td>
                     <td className="py-3 px-4 font-mono">
-                      {shareholder.shares.toLocaleString()}
+                      {shareholder.shares?.toLocaleString?.() ?? 0}
                     </td>
                     <td className="py-3 px-4 font-medium">
-                      {shareholder.percentage}%
+                      {shareholder.percentage ?? 0}%
                     </td>
                     <td className="py-3 px-4 font-medium">
-                      {shareholder.valuation}
+                      {shareholder.valuation ?? ''}
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant="secondary">
-                        {shareholder.investmentRound}
+                        {shareholder.investmentRound ?? ''}
                       </Badge>
                     </td>
                     <td className="py-3 px-4">

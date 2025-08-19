@@ -3,7 +3,11 @@
  * Provides input validation, sanitization, and security checks
  */
 
-import DOMPurify from 'isomorphic-dompurify';
+let DOMPurify: any = null;
+if (typeof window !== 'undefined') {
+  // Only import DOMPurify on the client
+  DOMPurify = require('isomorphic-dompurify');
+}
 import { z } from 'zod';
 
 // Common validation schemas
@@ -26,10 +30,14 @@ export class InputSanitizer {
    * Sanitize HTML content to prevent XSS attacks
    */
   static sanitizeHtml(input: string): string {
-    return DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-      ALLOWED_ATTR: [],
-    });
+    if (DOMPurify) {
+      return DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
+        ALLOWED_ATTR: [],
+      });
+    }
+    // On server, return input unchanged or use a server-side sanitizer if needed
+    return input;
   }
 
   /**

@@ -111,7 +111,7 @@ class DebugLogger {
     });
 
     // Catch global errors
-    window.addEventListener('error', (event) => {
+    window.addEventListener('error', (event: ErrorEvent) => {
       this.error(DebugCategory.GENERAL, 'Global error', {
         message: event.message,
         filename: event.filename,
@@ -139,9 +139,13 @@ class DebugLogger {
     };
 
     // Add performance data if available (browser only)
-    if (this.config.enablePerformanceTracking && typeof window !== 'undefined' && performance.memory) {
+    if (
+      this.config.enablePerformanceTracking &&
+      typeof window !== 'undefined' &&
+      typeof (performance as any).memory !== 'undefined'
+    ) {
       entry.performance = {
-        memory: (performance.memory as any).usedJSHeapSize,
+        memory: ((performance as any).memory).usedJSHeapSize,
       };
     }
 
